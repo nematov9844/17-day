@@ -3,50 +3,51 @@
 import { useForm } from "react-hook-form";
 import { struct, string, number, refine, StructError } from "superstruct";
 
-// 1. Interface yaratish
 interface FormData {
 	name: string;
 	email: string;
 	age: number;
 }
 
-// 2. Superstruct validatsiya strukturasini yaratish
+// Validatsiya xabarlarini alohida obyektga ajratish
+const validationMessages = {
+	required: "Bu maydon to'ldirilishi shart",
+	email: "Email formatini to'g'ri kiriting",
+	age: "Yosh 18 dan katta bo'lishi kerak",
+};
+
 const FormSchema = struct({
-	name: string(),
-	email: refine(
-		string(),
-		"email",
-		(value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) // Email validatsiyasi
-	),
-	age: refine(number(), "age", (value) => value >= 18), // 18 dan katta bo'lishi kerak
+	name: refine(string(), "name", (value) => value.length >= 2), // Ismning minimal uzunligi
+	email: refine(string(), "email", (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)),
+	age: refine(number(), "age", (value) => value >= 18 && value <= 100), // Yosh chegarasi
 });
 
-// 3. Form componentini yaratish
 const MyForm = () => {
 	const {
 		register,
 		handleSubmit,
 		setError,
-		formState: { errors },
+		formState: { errors, isSubmitting },
 	} = useForm<FormData>({
 		defaultValues: {
 			name: "",
 			email: "",
-			age: 0,
+			age: 18, // Default yosh 0 emas, 18 dan boshlansin
 		},
 	});
 
-	// 4. Formni yuborish funksiyasi
-	const onSubmit = (data: FormData) => {
-		console.log("Submitted Data:", data);
-
+	const onSubmit = async (data: FormData) => {
 		try {
-			FormSchema.assert(data); // Superstruct validatsiyasi
+			FormSchema.assert(data);
+			// Ma'lumotlarni yuborish
+			await new Promise((resolve) => setTimeout(resolve, 1000)); // API chaqiruvi simulyatsiyasi
 			alert("Form muvaffaqiyatli yuborildi! ✅");
 		} catch (error) {
 			if (error instanceof StructError) {
-				// Superstruct xatolarini aniqlash va ko'rsatish
-				setError(error.key as keyof FormData, { message: error.message });
+				setError(error.key as keyof FormData, {
+					message:
+						validationMessages[error.key as keyof typeof validationMessages] || error.message,
+				});
 			}
 		}
 	};
@@ -54,47 +55,51 @@ const MyForm = () => {
 	return (
 		<form
 			onSubmit={handleSubmit(onSubmit)}
-			className='space-y-4 max-w-md mx-auto'>
-			{/* Name */}
-			<div>
-				<label className='block font-medium'>Name</label>
+			className='space-y-4 bg-blue-400 font-bold text-white max-w-md mx-auto p-6'>
+			<div className="flex flex-col w-full justify-start ">
+				<label className='font-medium w-[40px]'>Ism</label>
 				<input
-					{...register("name")}
+					{...register("name", { required: validationMessages.required })}
 					type='text'
-					className='border rounded w-full p-2'
-                    placeholder="Enter your Name"
+					className='border rounded w-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+					placeholder='Ismingizni kiriting'
 				/>
-				{errors.name && <p className='text-red-500'>{errors.name.message}</p>}
+				{errors.name && <p className='text-red-500 text-sm mt-1'>{errors.name.message}</p>}
 			</div>
 
-			{/* Email */}
-			<div>
-				<label className='block font-medium'>Email</label>
+            <div className="flex flex-col w-full justify-start ">
+
+				<label className='w-[40px] font-medium mb-1'>Email</label>
 				<input
-					{...register("email")}
+					{...register("email", { required: validationMessages.required })}
 					type='email'
-					className='border rounded w-full p-2'
-                    placeholder="Enter your Email"
+					className='border rounded w-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+					placeholder='Email manzilingizni kiriting'
 				/>
-				{errors.email && <p className='text-red-500'>{errors.email.message}</p>}
+				{errors.email && <p className='text-red-500 text-sm mt-1'>{errors.email.message}</p>}
 			</div>
 
-			{/* Age */}
-			<div>
-				<label className='block font-medium'>Age</label>
+            <div className="flex flex-col w-full justify-start ">
+
+				<label className='w-[40px] font-medium mb-1'>Yosh</label>
 				<input
-					{...register("age", { valueAsNumber: true })}
+					{...register("age", {
+						required: validationMessages.required,
+						valueAsNumber: true,
+						min: { value: 18, message: validationMessages.age },
+					})}
 					type='number'
-					className='border rounded w-full p-2'
+					className='border text-black rounded w-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+					placeholder='Yoshingizni kiriting'
 				/>
-				{errors.age && <p className='text-red-500'>{errors.age.message}</p>}
+				{errors.age && <p className='text-red-500 text-sm mt-1'>{errors.age.message}</p>}
 			</div>
 
-			{/* Submit */}
 			<button
 				type='submit'
-				className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600'>
-				Submit
+				disabled={isSubmitting}
+				className='w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300 transition-colors'>
+				{isSubmitting ? "Yuborilmoqda..." : "Yuborish"}
 			</button>
 		</form>
 	);
