@@ -1,7 +1,7 @@
 /** @format */
 
 import { useForm } from "react-hook-form";
-import { struct, string, number, refine, StructError } from "superstruct";
+import { define, string, number, refine, StructError } from "superstruct";
 
 interface FormData {
 	name: string;
@@ -16,7 +16,7 @@ const validationMessages = {
 	age: "Yosh 18 dan katta bo'lishi kerak",
 };
 
-const FormSchema = struct({
+const FormSchema = define({
 	name: refine(string(), "name", (value) => value.length >= 2), // Ismning minimal uzunligi
 	email: refine(string(), "email", (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)),
 	age: refine(number(), "age", (value) => value >= 18 && value <= 100), // Yosh chegarasi
@@ -56,7 +56,7 @@ const MyForm = () => {
 		<form
 			onSubmit={handleSubmit(onSubmit)}
 			className='space-y-4 bg-blue-400 font-bold text-white max-w-md mx-auto p-6'>
-			<div className="flex flex-col w-full justify-start ">
+			<div className='flex flex-col w-full justify-start '>
 				<label className='font-medium w-[40px]'>Ism</label>
 				<input
 					{...register("name", { required: validationMessages.required })}
@@ -67,8 +67,7 @@ const MyForm = () => {
 				{errors.name && <p className='text-red-500 text-sm mt-1'>{errors.name.message}</p>}
 			</div>
 
-            <div className="flex flex-col w-full justify-start ">
-
+			<div className='flex flex-col w-full justify-start '>
 				<label className='w-[40px] font-medium mb-1'>Email</label>
 				<input
 					{...register("email", { required: validationMessages.required })}
@@ -79,8 +78,7 @@ const MyForm = () => {
 				{errors.email && <p className='text-red-500 text-sm mt-1'>{errors.email.message}</p>}
 			</div>
 
-            <div className="flex flex-col w-full justify-start ">
-
+			<div className='flex flex-col w-full justify-start '>
 				<label className='w-[40px] font-medium mb-1'>Yosh</label>
 				<input
 					{...register("age", {
